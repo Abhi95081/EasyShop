@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             EasyShopTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-
+                    AppNavigation(Modifier.padding(innerPadding))
                 }
             }
         }
