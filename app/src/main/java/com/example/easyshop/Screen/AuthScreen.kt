@@ -78,7 +78,7 @@ fun AuthScreen(modifier: Modifier, navController: NavHostController) {
                 .fillMaxWidth()
                 .height(60.dp),
             colors = ButtonDefaults.outlinedButtonColors(
-                containerColor = Color.Red,
+                containerColor = Color.Green,
                 contentColor = Color.White
             )
         ) {
