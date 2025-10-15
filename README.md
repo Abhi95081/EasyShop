@@ -32,5 +32,3 @@ It provides a smooth, intuitive, and responsive shopping experience — allowing
 | **Async Tasks** | Kotlin Coroutines + Flow |
 | **Image Loading** | Coil |
 
----
-
