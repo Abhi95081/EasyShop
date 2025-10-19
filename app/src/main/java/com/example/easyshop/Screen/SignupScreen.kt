@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -28,10 +29,14 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.easyshop.AppUtil
 import com.example.easyshop.R
+import com.example.easyshop.viewmodel.AuthViewModel
+import kotlin.Result.Companion.success
 
 @Composable
-fun SignupScreen(modifier: Modifier = Modifier) {
+fun SignupScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel = viewModel()) {
 
     var email by remember{
         mutableStateOf("")
@@ -46,6 +51,7 @@ fun SignupScreen(modifier: Modifier = Modifier) {
         mutableStateOf("")
     }
 
+        val context = LocalContext.current
     Column(
         modifier= Modifier.fillMaxSize()
             .padding(32.dp)
@@ -117,6 +123,13 @@ fun SignupScreen(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(10.dp))
 
         Button(onClick = {
+            authViewModel.signup(email,name,password){success,errorMessage ->
+                if(success){
+                    println("Signup Successful")
+                }else{
+                    AppUtil.showToast(context,errorMessage?:"SomeThing Went Wrong")
+                }
+            }
 
         },
             modifier = Modifier
