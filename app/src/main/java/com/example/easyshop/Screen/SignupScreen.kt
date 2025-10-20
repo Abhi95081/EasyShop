@@ -30,18 +30,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.easyshop.AppUtil
 import com.example.easyshop.R
 import com.example.easyshop.viewmodel.AuthViewModel
 import kotlin.Result.Companion.success
 
 @Composable
-fun SignupScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel = viewModel()) {
+fun SignupScreen(modifier: Modifier = Modifier, navController: NavController, authViewModel: AuthViewModel = viewModel()) {
 
     var email by remember{
         mutableStateOf("")
     }
-
 
     var name by remember{
         mutableStateOf("")
@@ -51,7 +51,12 @@ fun SignupScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel = v
         mutableStateOf("")
     }
 
-        val context = LocalContext.current
+    var isLoading by remember{
+        mutableStateOf(false)
+    }
+
+    val context = LocalContext.current
+
     Column(
         modifier= Modifier.fillMaxSize()
             .padding(32.dp)
@@ -123,23 +128,26 @@ fun SignupScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel = v
         Spacer(modifier = Modifier.height(10.dp))
 
         Button(onClick = {
+            isLoading = true
             authViewModel.signup(email,name,password){success,errorMessage ->
                 if(success){
-                    println("Signup Successful")
+                    isLoading = false
+                    navController.navigate("home")
+                    {
+                        popUpTo("auth"){inclusive = true}
+                    }
                 }else{
+                    isLoading = false
                     AppUtil.showToast(context,errorMessage?:"SomeThing Went Wrong")
                 }
             }
-
         },
+            enabled = !isLoading,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(60.dp)
         ) {
-            Text("SignUp", fontSize = 22.sp)
+            Text(if(isLoading) "Loading..." else "SignUp", fontSize = 22.sp)
         }
-
-
     }
-    
 }
