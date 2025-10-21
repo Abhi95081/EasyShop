@@ -60,4 +60,7 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    implementation("io.coil-kt:coil-compose:2.2.0") //  Asynchronous Image
+    implementation("com.tbuonomo:dotsindicator:5.1.0") // Dots Indicator
 }
