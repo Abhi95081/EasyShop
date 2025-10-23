@@ -40,7 +40,7 @@ fun HeaderView(modifier: Modifier = Modifier) {
 
     Row(
         modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.SpaceBetween
     ){
         Column{
@@ -51,7 +51,7 @@ fun HeaderView(modifier: Modifier = Modifier) {
             ))
         }
         IconButton(onClick = {}) {
-            Icon(imageVector = Icons.Default.Search, contentDescription = "Notifications")
+            Icon(imageVector = Icons.Default.Search, contentDescription = "Search")
         }
     }
 
