@@ -69,7 +69,7 @@ fun LoginScreen(modifier: Modifier = Modifier ,navController: NavController, aut
                 fontFamily = FontFamily.Monospace,
             )
         )
-        Spacer(modifier.height(10.dp))
+        Spacer(modifier.height(5.dp))
 
         Text(
             "Sign In To Your account",
@@ -77,7 +77,7 @@ fun LoginScreen(modifier: Modifier = Modifier ,navController: NavController, aut
                 fontSize = 22.sp
             )
         )
-        Spacer(modifier.height(10.dp))
+        Spacer(modifier.height(5.dp))
 
         Image(
             painter = painterResource(id = R.drawable.banner_user),
@@ -86,7 +86,7 @@ fun LoginScreen(modifier: Modifier = Modifier ,navController: NavController, aut
                 .height(200.dp)
         )
 
-        Spacer(modifier.height(20.dp))
+        Spacer(modifier.height(10.dp))
 
         OutlinedTextField(
             value = email, onValueChange = {
@@ -98,7 +98,7 @@ fun LoginScreen(modifier: Modifier = Modifier ,navController: NavController, aut
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier.height(10.dp))
+        Spacer(modifier.height(5.dp))
 
         OutlinedTextField(
             value = password, onValueChange = {
@@ -111,7 +111,7 @@ fun LoginScreen(modifier: Modifier = Modifier ,navController: NavController, aut
             visualTransformation = PasswordVisualTransformation()
         )
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(5.dp))
 
         Button(
             onClick = {
