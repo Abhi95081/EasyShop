@@ -59,7 +59,7 @@ fun SignupScreen(modifier: Modifier = Modifier, navController: NavController, au
 
     Column(
         modifier= Modifier.fillMaxSize()
-            .padding(32.dp)
+            .padding(15.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -88,7 +88,7 @@ fun SignupScreen(modifier: Modifier = Modifier, navController: NavController, au
                 .height(200.dp)
         )
 
-        Spacer(modifier.height(20.dp))
+        Spacer(modifier.height(10.dp))
 
         OutlinedTextField(
             value = email ,onValueChange ={
