@@ -70,7 +70,7 @@ fun HomeScreen(modifier: Modifier = Modifier, navController: NavController) {
 @Composable
 fun ContentScreen(modifier: Modifier = Modifier, selectedIndex: Int) {
     Column(
-        modifier = modifier.padding(32.dp),
+        modifier = modifier.padding(15.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
