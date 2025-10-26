@@ -54,7 +54,7 @@ fun LoginScreen(modifier: Modifier = Modifier ,navController: NavController, aut
 
     Column(
         modifier = Modifier.fillMaxSize()
-            .padding(32.dp)
+            .padding(15.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
