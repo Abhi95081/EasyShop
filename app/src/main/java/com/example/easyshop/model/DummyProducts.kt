@@ -13,7 +13,7 @@ object DummyProducts {
             price = "₹12,999",
             actualPrice = "₹15,999",
             category = "Electronics",
-            image = listOf(R.drawable.phone, R.drawable.phone_back),
+            image = listOf(R.drawable.phone, R.drawable.phone_back,R.drawable.phone, R.drawable.phone_back),
             OtherDetails = mapOf(
                 "Brand" to "TechNova",
                 "Model" to "Nova X14",
@@ -30,7 +30,7 @@ object DummyProducts {
             price = "₹1,999",
             actualPrice = "₹2,499",
             category = "Fashion",
-            image = listOf(R.drawable.shoe, R.drawable.shoe_2),
+            image = listOf(R.drawable.shoe, R.drawable.shoe_2,R.drawable.shoe, R.drawable.shoe_2),
             OtherDetails = mapOf(
                 "Brand" to "StrideX",
                 "Material" to "Breathable Mesh",
@@ -46,7 +46,7 @@ object DummyProducts {
             price = "₹1,000",
             actualPrice = "₹3,000",
             category = "Sports",
-            image = listOf(R.drawable.bat),
+            image = listOf(R.drawable.bat,R.drawable.bat,R.drawable.bat,R.drawable.bat),
             OtherDetails = mapOf(
                 "Brand" to "Spartan Pro",
                 "Material" to "English Willow",
@@ -62,7 +62,7 @@ object DummyProducts {
             price = "₹3,499",
             actualPrice = "₹4,999",
             category = "Kitchen",
-            image = listOf(R.drawable.mixer),
+            image = listOf(R.drawable.mixer,R.drawable.mixer,R.drawable.mixer,R.drawable.mixer),
             OtherDetails = mapOf(
                 "Brand" to "HomeEase",
                 "Power" to "500 Watts",
@@ -78,7 +78,7 @@ object DummyProducts {
             price = "₹250",
             actualPrice = "₹500",
             category = "Grocery",
-            image = listOf(R.drawable.maggie),
+            image = listOf(R.drawable.maggie,R.drawable.maggie,R.drawable.maggie,R.drawable.maggie),
             OtherDetails = mapOf(
                 "Brand" to "Nestle",
                 "Type" to "Instant Noodles",
