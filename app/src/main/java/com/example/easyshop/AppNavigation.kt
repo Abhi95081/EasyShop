@@ -11,6 +11,7 @@ import com.example.easyshop.Screen.HomeScreen
 import com.example.easyshop.Screen.LoginScreen
 import com.example.easyshop.Screen.SignupScreen
 import com.example.easyshop.pages.CategoryProductPage
+import com.example.easyshop.pages.CheckoutPage
 import com.example.easyshop.pages.ProductDetailsPage
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -50,6 +51,12 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             val productId = it.arguments?.getString("productId")
             ProductDetailsPage(modifier,productId?:"")
         }
+
+
+        composable("checkout"){
+            CheckoutPage(modifier)
+        }
+
     }
 }
 
