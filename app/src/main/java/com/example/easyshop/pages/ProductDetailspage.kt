@@ -6,25 +6,28 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
+import com.example.easyshop.AppUtil
 import com.example.easyshop.data.DummyProducts
 
 @Composable
 fun ProductDetailsPage(modifier: Modifier = Modifier, productId: String) {
 
-    // Get product by ID
+    val context = LocalContext.current
     val product = DummyProducts.productList.find { it.id == productId }
 
     if (product == null) {
@@ -38,6 +41,9 @@ fun ProductDetailsPage(modifier: Modifier = Modifier, productId: String) {
         return
     }
 
+    // 🔹 Favorite state
+    var isFavorite by remember { mutableStateOf(AppUtil.isFavorite(productId)) }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -45,7 +51,7 @@ fun ProductDetailsPage(modifier: Modifier = Modifier, productId: String) {
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // 🔹 Horizontal scroll for product images
+        // 🔹 Product Images
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -73,16 +79,11 @@ fun ProductDetailsPage(modifier: Modifier = Modifier, productId: String) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 🔹 Product Title
-        Text(
-            text = product.title,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Text(text = product.title, fontSize = 22.sp, fontWeight = FontWeight.Bold)
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // 🔹 Price + Actual Price
+        // 🔹 Price and Favourite
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -102,10 +103,14 @@ fun ProductDetailsPage(modifier: Modifier = Modifier, productId: String) {
 
             Spacer(modifier = Modifier.weight(1f))
 
-            IconButton(onClick = { /* TODO: Add Favourite Logic */ }) {
+            IconButton(onClick = {
+                AppUtil.toggleFavorite(context, productId)
+                isFavorite = AppUtil.isFavorite(productId)
+            }) {
                 Icon(
-                    imageVector = Icons.Default.FavoriteBorder,
-                    contentDescription = "Add to Favourite"
+                    imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = "Add to Favourite",
+                    tint = if (isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
                 )
             }
         }
@@ -114,10 +119,8 @@ fun ProductDetailsPage(modifier: Modifier = Modifier, productId: String) {
 
         // 🔹 Add to Cart Button
         Button(
-            onClick = { /* TODO: Add Cart Logic */ },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
+            onClick = { AppUtil.addToCart(context, productId) },
+            modifier = Modifier.fillMaxWidth().height(50.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.ShoppingCart,
@@ -129,64 +132,27 @@ fun ProductDetailsPage(modifier: Modifier = Modifier, productId: String) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        //  Product Description
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Text(
-                text = "Product Description",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
+        // 🔹 Description
+        Text("Product Description", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
         Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = product.description,
-            fontSize = 16.sp,
-            lineHeight = 22.sp,
-            modifier = Modifier.padding(horizontal = 8.dp)
-        )
+        Text(product.description, fontSize = 16.sp, lineHeight = 22.sp)
 
-        //  Other Details Section
         if (product.OtherDetails.isNotEmpty()) {
             Spacer(modifier = Modifier.height(24.dp))
-
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                 elevation = CardDefaults.cardElevation(4.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Text(
-                        text = "Product Details",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Product Details", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        product.OtherDetails.forEach { (key, value) ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = key,
-                                    fontSize = 14.sp,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                                )
-                                Text(
-                                    text = value,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
+                    product.OtherDetails.forEach { (key, value) ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(key, fontSize = 14.sp)
+                            Text(value, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                         }
                     }
                 }
