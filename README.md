@@ -28,6 +28,7 @@ It provides a smooth, intuitive, and responsive shopping experience — allowing
 | **Navigation** | Jetpack Navigation Compose |
 | **Networking (optional)** | Retrofit + Gson |
 | **Local Storage (optional)** | Room Database |
+| **Dynamic Storage** | FireBase + FireBase Authentication |
 | **Dependency Injection (optional)** | Hilt / Koin |
 | **Async Tasks** | Kotlin Coroutines + Flow |
 | **Image Loading** | Coil |
