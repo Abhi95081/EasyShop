@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.widget.Toast
 import com.example.easyshop.data.DummyProducts
+import com.example.easyshop.model.OrderModel
 import com.example.easyshop.model.ProductModel
 import com.razorpay.Checkout
 import org.json.JSONObject
@@ -116,6 +117,22 @@ object AppUtil {
         }
     }
 
+    fun clearCartAndAddToOrder() {
+        if (cartItems.isEmpty()) return
+
+        val order = OrderModel(
+            id = System.currentTimeMillis().toString(),
+            userId = "dummyUserId",
+            items = cartItems.associate { it.product.id to it.quantity.toLong() },
+            status = "ORDERED",
+            address = "CU Boys Hostel, Punjab"
+        )
+
+        // 🧹 Clear the cart
+        cartItems.clear()
+
+        println("✅ Order Placed Successfully: $order")
+    }
 
 
 }
