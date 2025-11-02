@@ -1,5 +1,6 @@
 package com.example.easyshop
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -29,7 +30,18 @@ class MainActivity : ComponentActivity(), PaymentResultListener {
 
     // ✅ Payment success callback
     override fun onPaymentSuccess(p0: String?) {
-        AppUtil.showToast(this,"✅ Payment Successful")
+        AppUtil.clearCartAndAddToOrder()
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Payment Successful")
+            .setMessage("Your order has been placed successfully!")
+            .setPositiveButton("OK") { _ , _ ->
+
+                val navController = GlobalNavigation.navController
+                navController.popBackStack()
+                navController.navigate("home")
+            }
+            .setCancelable(false)
+            .show()
     }
 
     // ✅ Payment failure callback
