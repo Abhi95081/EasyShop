@@ -44,7 +44,6 @@ class MainActivity : ComponentActivity(), PaymentResultListener {
             .show()
     }
 
-    // ✅ Payment failure callback
     override fun onPaymentError(p0: Int, p1: String?) {
         AppUtil.showToast(this,"❌ Payment Failed")
     }
