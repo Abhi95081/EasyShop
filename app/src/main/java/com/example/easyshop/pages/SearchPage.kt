@@ -1,8 +1,6 @@
 package com.example.easyshop.pages
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,15 +21,15 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
 import com.example.easyshop.data.DummyProducts
 import com.example.easyshop.model.ProductModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun SearchPage(
     modifier: Modifier = Modifier,
@@ -47,94 +45,81 @@ fun SearchPage(
         }
     }
 
+    val background = Brush.verticalGradient(
+        colors = listOf(Color(0xFFF9FBFF), Color.White))
+
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(background)
             .padding(horizontal = 16.dp)
     ) {
-        Spacer(modifier = Modifier.height(48.dp)) // Top padding for balance
+        Spacer(modifier = Modifier.height(40.dp))
 
-        // 🌈 Fancy Gradient Search Bar Background
-        Box(
+        // 🔹 Elegant Search Bar
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .shadow(8.dp, RoundedCornerShape(50))
-                .background(
-                    brush = Brush.horizontalGradient(
-                        listOf(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                            MaterialTheme.colorScheme.surface
-                        )
-                    ),
-                    shape = RoundedCornerShape(50)
-                )
-                .padding(6.dp)
+                .shadow(6.dp, RoundedCornerShape(30.dp))
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(30.dp))
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
+            IconButton(
+                onClick = { onBackClick?.invoke() },
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), CircleShape)
             ) {
-                // 🔙 Back button
-                IconButton(
-                    onClick = { onBackClick?.invoke() },
-                    modifier = Modifier
-                        .size(38.dp)
-                        .background(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                            CircleShape
-                        )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Back",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(6.dp))
-
-                // 🔍 Outlined Search Text Field
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(60.dp),
-                    placeholder = {
-                        Text(
-                            text = "Search for products...",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 15.sp
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Search",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    },
-                    shape = RoundedCornerShape(50),
-                    singleLine = true
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Back",
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(55.dp),
+                placeholder = {
+                    Text("Search for products...", fontSize = 15.sp)
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+                shape = RoundedCornerShape(25.dp),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent
+                )
+            )
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        // 🛒 Product List or Empty State
         AnimatedVisibility(
             visible = filteredProducts.isNotEmpty(),
             enter = fadeIn(),
             exit = fadeOut()
         ) {
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(filteredProducts) { product ->
-                    SearchResultItem(product, onProductClick)
+                    SearchResultCard(product = product, onProductClick = onProductClick)
                 }
             }
         }
@@ -149,9 +134,10 @@ fun SearchPage(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "No products found 😕",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    "No products found 😕",
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium
                 )
             }
         }
@@ -159,30 +145,27 @@ fun SearchPage(
 }
 
 @Composable
-fun SearchResultItem(product: ProductModel, onProductClick: (String) -> Unit) {
+fun SearchResultCard(product: ProductModel, onProductClick: (String) -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onProductClick(product.id) },
-        shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f)
-        )
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
-                painter = painterResource(id = product.image.first()),
+                painter = rememberAsyncImagePainter(model = product.image.firstOrNull()),
                 contentDescription = product.title,
                 modifier = Modifier
                     .size(90.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surface),
+                    .clip(RoundedCornerShape(12.dp)),
                 contentScale = ContentScale.Crop
             )
 
@@ -194,7 +177,7 @@ fun SearchResultItem(product: ProductModel, onProductClick: (String) -> Unit) {
             ) {
                 Text(
                     text = product.title,
-                    fontSize = 18.sp,
+                    fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 2,
@@ -203,7 +186,7 @@ fun SearchResultItem(product: ProductModel, onProductClick: (String) -> Unit) {
 
                 Text(
                     text = product.category,
-                    fontSize = 14.sp,
+                    fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
@@ -212,15 +195,15 @@ fun SearchResultItem(product: ProductModel, onProductClick: (String) -> Unit) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = product.price,
-                        fontSize = 17.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "incl. all taxes",
+                        text = "MRP ${product.actualPrice}",
                         fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.Gray
                     )
                 }
             }
