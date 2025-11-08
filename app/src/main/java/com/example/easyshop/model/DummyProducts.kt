@@ -10,8 +10,8 @@ object DummyProducts {
             id = "1",
             title = "Smartphone",
             description = "Experience cutting-edge performance with the latest Android 14 smartphone. Featuring a high-speed processor, vibrant AMOLED display, and a professional-grade camera system.",
-            price = "₹12,999",
-            actualPrice = "₹15,999",
+            price = "₹120",
+            actualPrice = "₹150",
             category = "Electronics",
             image = listOf(R.drawable.phone, R.drawable.phone_back,R.drawable.phone, R.drawable.phone_back),
             OtherDetails = mapOf(
@@ -27,8 +27,8 @@ object DummyProducts {
             id = "2",
             title = "Running Shoes",
             description = "Designed for athletes and fitness enthusiasts, these shoes offer superior cushioning, breathable mesh fabric, and anti-slip soles for all terrains.",
-            price = "₹1,999",
-            actualPrice = "₹2,499",
+            price = "₹199",
+            actualPrice = "₹249",
             category = "Fashion",
             image = listOf(R.drawable.shoe, R.drawable.shoe_2,R.drawable.shoe, R.drawable.shoe_2),
             OtherDetails = mapOf(
@@ -43,8 +43,8 @@ object DummyProducts {
             id = "3",
             title = "Cricket Bat",
             description = "Professional grade English willow cricket bat, lightweight and perfectly balanced for power hitting and long innings.",
-            price = "₹1,000",
-            actualPrice = "₹3,000",
+            price = "₹100",
+            actualPrice = "₹300",
             category = "Sports",
             image = listOf(R.drawable.bat,R.drawable.bat,R.drawable.bat,R.drawable.bat),
             OtherDetails = mapOf(
@@ -59,8 +59,8 @@ object DummyProducts {
             id = "4",
             title = "Mixer Grinder",
             description = "Powerful 500W mixer grinder with stainless steel jars for blending, grinding, and mixing your kitchen needs efficiently.",
-            price = "₹3,499",
-            actualPrice = "₹4,999",
+            price = "₹349",
+            actualPrice = "₹499",
             category = "Kitchen",
             image = listOf(R.drawable.mixer,R.drawable.mixer,R.drawable.mixer,R.drawable.mixer),
             OtherDetails = mapOf(
