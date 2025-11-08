@@ -1,32 +1,33 @@
 package com.example.easyshop.pages
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
+import com.example.easyshop.AppUtil
 import com.example.easyshop.components.CategoriesView
 import com.example.easyshop.components.HeaderView
 import com.example.easyshop.data.DummyProducts
@@ -37,91 +38,42 @@ fun HomePage(modifier: Modifier = Modifier) {
     val products = DummyProducts.productList.shuffled()
     val isDark = isSystemInDarkTheme()
 
-    // ✨ Gradient background
-    val gradientBackground = if (isDark) {
+    val bgGradient = if (isDark) {
         Brush.verticalGradient(
-            colors = listOf(
-                Color(0xFF0B0C10),
-                Color(0xFF1F2833),
-                Color(0xFF121212)
-            )
+            listOf(Color(0xFF0F0F10), Color(0xFF1C1C1E))
         )
     } else {
         Brush.verticalGradient(
-            colors = listOf(
-                Color(0xFFF0F7FF),
-                Color(0xFFFFFFFF)
-            )
+            listOf(Color(0xFFE3F2FD), Color(0xFFFFFFFF))
         )
     }
 
-    Box(
+    Column(
         modifier = modifier
             .fillMaxSize()
-            .background(gradientBackground)
+            .background(bgGradient)
+            .verticalScroll(rememberScrollState())
+            .padding(vertical = 12.dp)
+            .navigationBarsPadding()
     ) {
-        // Curved top background
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(180.dp)
-                .clip(RoundedCornerShape(bottomStart = 40.dp, bottomEnd = 40.dp))
-                .background(
-                    Brush.linearGradient(
-                        colors = if (isDark)
-                            listOf(Color(0xFF0B132B), Color(0xFF1C2541))
-                        else
-                            listOf(Color(0xFF1976D2), Color(0xFF63A4FF))
-                    )
-                )
-        )
+        HeaderView(modifier = Modifier.fillMaxWidth())
 
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-        ) {
-            // Header Section (sits on top of curved background)
-            HeaderView(modifier = Modifier.fillMaxWidth())
+        Spacer(modifier = Modifier.height(18.dp))
 
-            Spacer(modifier = Modifier.height(18.dp))
+        SectionHeader("✨ Explore Categories")
+        CategoriesView(modifier = Modifier.fillMaxWidth())
 
-            // Floating Card for Categories
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(10.dp, RoundedCornerShape(24.dp))
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
-                Column {
-                    Text(
-                        text = "🛍 Shop by Category",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    CategoriesView(modifier = Modifier.fillMaxWidth())
-                }
-            }
+        Spacer(modifier = Modifier.height(26.dp))
 
-            Spacer(modifier = Modifier.height(30.dp))
+        SectionHeader("🔥 Trending Now")
+        ProductHorizontalList(products.take(6))
 
-            // 🔥 Trending Products
-            SectionHeader("🔥 Trending Products")
-            ProductHorizontalList(products.take(6))
+        Spacer(modifier = Modifier.height(30.dp))
 
-            Spacer(modifier = Modifier.height(25.dp))
+        SectionHeader("💥 Best Deals for You")
+        ProductHorizontalList(products.shuffled().take(6))
 
-            // 💥 Best Deals
-            SectionHeader("💥 Best Deals for You")
-            ProductHorizontalList(products.shuffled().take(6))
-
-            Spacer(modifier = Modifier.height(40.dp))
-        }
+        Spacer(modifier = Modifier.height(80.dp))
     }
 }
 
@@ -132,9 +84,8 @@ fun SectionHeader(title: String) {
         fontSize = 22.sp,
         fontWeight = FontWeight.ExtraBold,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(horizontal = 4.dp)
+        modifier = Modifier.padding(horizontal = 18.dp, vertical = 6.dp)
     )
-    Spacer(modifier = Modifier.height(10.dp))
 }
 
 @Composable
@@ -142,7 +93,7 @@ fun ProductHorizontalList(products: List<ProductModel>) {
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
-        contentPadding = PaddingValues(horizontal = 6.dp)
+        contentPadding = PaddingValues(horizontal = 16.dp)
     ) {
         items(products) { product ->
             ProductCard(product)
@@ -152,53 +103,58 @@ fun ProductHorizontalList(products: List<ProductModel>) {
 
 @Composable
 fun ProductCard(product: ProductModel) {
+    val context = LocalContext.current
     val isDark = isSystemInDarkTheme()
 
-    val cardGlow = if (isDark) {
-        Brush.linearGradient(
-            colors = listOf(
-                Color(0xFF66FCF1).copy(alpha = 0.15f),
-                Color(0xFF45A29E).copy(alpha = 0.05f)
-            )
-        )
-    } else {
-        Brush.linearGradient(
-            colors = listOf(
-                Color(0xFFFFFFFF),
-                Color(0xFFF0F0F0)
-            )
-        )
+    var isFavorite by remember { mutableStateOf(AppUtil.isFavorite(product.id)) }
+    var isInCart by remember { mutableStateOf(AppUtil.isInCart(product.id)) }
+
+    // 🧮 Calculate discount %
+    val discountPercent = try {
+        val actual = product.actualPrice.filter { it.isDigit() }.toDouble()
+        val sale = product.price.filter { it.isDigit() }.toDouble()
+        if (actual > 0) ((actual - sale) / actual * 100).toInt() else 0
+    } catch (e: Exception) {
+        0
     }
+
+    val favScale by animateFloatAsState(
+        targetValue = if (isFavorite) 1.3f else 1f,
+        label = ""
+    )
+
+    val cartButtonColor by animateColorAsState(
+        targetValue = if (isInCart)
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+        else Color.Transparent,
+        label = ""
+    )
 
     Card(
         modifier = Modifier
-            .width(170.dp)
+            .width(180.dp)
             .wrapContentHeight()
-            .shadow(
-                elevation = if (isDark) 12.dp else 8.dp,
-                shape = RoundedCornerShape(18.dp),
-                ambientColor = if (isDark) Color(0xFF45A29E) else Color.Gray.copy(alpha = 0.3f),
-                spotColor = if (isDark) Color(0xFF66FCF1) else Color.LightGray
-            )
-            .background(cardGlow, RoundedCornerShape(18.dp))
-            .clickable { /* TODO: Handle click */ }
-            .animateContentSize(),
+            .animateContentSize()
+            .shadow(10.dp, RoundedCornerShape(18.dp))
+            .clickable {
+                // TODO: Navigate to Product Detail
+            },
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isDark) Color(0xFF0B0C10) else Color.White
-        )
+            containerColor = if (isDark) Color(0xFF1A1B1F) else Color.White
+        ),
+        elevation = CardDefaults.cardElevation(3.dp)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp),
+            modifier = Modifier.padding(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
                 modifier = Modifier
-                    .height(130.dp)
+                    .height(140.dp)
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
+                    .background(Color.LightGray.copy(alpha = 0.1f))
             ) {
                 Image(
                     painter = rememberAsyncImagePainter(model = product.image.firstOrNull()),
@@ -207,79 +163,145 @@ fun ProductCard(product: ProductModel) {
                     modifier = Modifier.fillMaxSize()
                 )
 
-                // Discount Tag
+                // ✨ Gradient overlay for style
                 Box(
                     modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(6.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                ) {
-                    Text(
-                        text = "20% OFF",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        fontWeight = FontWeight.Bold
-                    )
+                        .fillMaxWidth()
+                        .height(40.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Black.copy(alpha = 0.3f),
+                                    Color.Transparent
+                                )
+                            )
+                        )
+                )
+
+                // 🎯 Discount Badge
+                if (discountPercent > 0) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(8.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(
+                                if (discountPercent >= 50)
+                                    Brush.horizontalGradient(
+                                        listOf(Color(0xFFFF7043), Color(0xFFFFB74D))
+                                    )
+                                else
+                                    Brush.horizontalGradient(
+                                        listOf(
+                                            MaterialTheme.colorScheme.primary,
+                                            Color(0xFF80DEEA)
+                                        )
+                                    )
+                            )
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "$discountPercent% OFF",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
 
-                // Wishlist Icon
-                IconButton(
-                    onClick = { /* TODO: Wishlist */ },
-                    modifier = Modifier.align(Alignment.TopEnd)
+                // ❤️ Favorite Button (with glow)
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(6.dp)
+                        .size(34.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.radialGradient(
+                                colors = if (isFavorite)
+                                    listOf(Color(0xFFFF1744), Color.Transparent)
+                                else listOf(Color.Black.copy(alpha = 0.2f), Color.Transparent)
+                            )
+                        )
+                        .clickable {
+                            AppUtil.toggleFavorite(context, product.id)
+                            isFavorite = AppUtil.isFavorite(product.id)
+                        },
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.FavoriteBorder,
-                        contentDescription = "Wishlist",
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
+                        imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = "Favorite",
+                        tint = if (isFavorite) Color(0xFFFF1744)
+                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
+                        modifier = Modifier.scale(favScale)
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(10.dp))
 
+            // 🛍 Product Name
             Text(
                 text = product.title,
-                style = TextStyle(
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                ),
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(3.dp))
 
+            // 💰 Prices
             Text(
                 text = product.price,
-                style = TextStyle(
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
             )
 
             Text(
                 text = "MRP: ${product.actualPrice}",
-                style = TextStyle(fontSize = 12.sp, color = Color.Gray)
+                fontSize = 12.sp,
+                color = Color.Gray
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
+            // 🛒 Add to Cart Button
             Button(
-                onClick = { /* TODO: Add to Cart */ },
-                shape = RoundedCornerShape(12.dp),
+                onClick = {
+                    if (!isInCart) AppUtil.addToCart(context, product.id)
+                    else AppUtil.removeFromCart(context, product.id)
+                    isInCart = AppUtil.isInCart(product.id)
+                },
+                shape = RoundedCornerShape(10.dp),
                 modifier = Modifier
                     .height(36.dp)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .background(cartButtonColor),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                    containerColor = if (isInCart)
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                    else MaterialTheme.colorScheme.primary,
+                    contentColor = if (isInCart)
+                        MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onPrimary
+                ),
+                elevation = ButtonDefaults.buttonElevation(2.dp)
             ) {
-                Text("Add to Cart", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Icon(
+                    imageVector = Icons.Default.ShoppingCart,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = if (isInCart) "Added" else "Add to Cart",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }
