@@ -25,29 +25,48 @@ object AppUtil {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
 
-    // 🛒 Add to cart
+    // 🛒 Add to Cart
     fun addToCart(context: Context, productId: String) {
         val product = DummyProducts.productList.find { it.id == productId }
 
         if (product != null) {
             val existingItem = cartItems.find { it.product.id == productId }
-
             if (existingItem != null) {
                 existingItem.quantity++
                 showToast(context, "Increased quantity of ${product.title} to ${existingItem.quantity}")
             } else {
                 cartItems.add(CartItem(product, 1))
-                showToast(context, "${product.title} added to cart 🛒")
             }
         } else {
             showToast(context, "Product not found!")
         }
     }
 
-    // 🛒 Get cart items
+    // 🛒 Remove from cart
+    fun removeFromCart(context: Context, productId: String) {
+        val product = DummyProducts.productList.find { it.id == productId }
+
+        if (product != null) {
+            val removed = cartItems.removeIf { it.product.id == productId }
+            if (removed) {
+                showToast(context, "${product.title} removed from cart ❌")
+            } else {
+                showToast(context, "${product.title} not in cart")
+            }
+        } else {
+            showToast(context, "Product not found!")
+        }
+    }
+
+    // 🛒 Check if product is in cart
+    fun isInCart(productId: String): Boolean {
+        return cartItems.any { it.product.id == productId }
+    }
+
+    // 🛒 Get all cart items
     fun getCartItems(): List<CartItem> = cartItems
 
-    // ❤️ Toggle favourite
+    // ❤️ Toggle favorite
     fun toggleFavorite(context: Context, productId: String) {
         val product = DummyProducts.productList.find { it.id == productId }
         if (product == null) {
@@ -57,24 +76,21 @@ object AppUtil {
 
         if (favoriteItems.any { it.id == productId }) {
             favoriteItems.removeIf { it.id == productId }
-            showToast(context, "${product.title} removed from favourites 💔")
         } else {
             favoriteItems.add(product)
-            showToast(context, "${product.title} added to favourites ❤️")
         }
     }
 
-    // ❤️ Check if product is favourite
+    // ❤️ Check if product is favorite
     fun isFavorite(productId: String): Boolean {
         return favoriteItems.any { it.id == productId }
     }
 
-    // ❤️ Get all favourite items
+    // ❤️ Get all favorite items
     fun getFavoriteItems(): List<ProductModel> = favoriteItems
 
-    fun razorpayApiKey(): String {
-            return "rzp_test_Ra0xpSF5f1Zfn6"
-    }
+    // 💳 Razorpay payment integration
+    fun razorpayApiKey(): String = "rzp_test_Ra0xpSF5f1Zfn6"
 
     fun startPayment(amount: Double) {
         try {
@@ -89,13 +105,13 @@ object AppUtil {
             }
 
             val checkout = Checkout()
-            checkout.setKeyID(razorpayApiKey()) // Your Razorpay Key ID (keep it secure)
+            checkout.setKeyID(razorpayApiKey())
 
             val options = JSONObject().apply {
                 put("name", "EasyShop")
                 put("description", "Order Payment")
-                put("currency", "INR") // ✅ Use INR for Indian payments
-                put("amount", (amount * 100).toInt()) // Razorpay expects amount in paise (₹1 = 100)
+                put("currency", "INR")
+                put("amount", (amount * 100).toInt())
                 put("theme.color", "#5C6BC0")
                 put("image", "https://yourapp.com/logo.png")
 
@@ -117,6 +133,7 @@ object AppUtil {
         }
     }
 
+    // 🧹 Place order & clear cart
     fun clearCartAndAddToOrder() {
         if (cartItems.isEmpty()) return
 
@@ -128,11 +145,7 @@ object AppUtil {
             address = "CU Boys Hostel, Punjab"
         )
 
-        // 🧹 Clear the cart
         cartItems.clear()
-
         println("✅ Order Placed Successfully: $order")
     }
-
-
 }
