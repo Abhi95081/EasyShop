@@ -50,11 +50,9 @@ fun ProfilePage(modifier: Modifier = Modifier) {
     }
 
     var showEditDialog by remember { mutableStateOf(false) }
-
     if (showEditDialog) {
         EditProfileDialog(
-            name = name,
-            address = address,
+            name, address,
             onDismiss = { showEditDialog = false },
             onSave = { newName, newAddress ->
                 name = newName
@@ -70,18 +68,17 @@ fun ProfilePage(modifier: Modifier = Modifier) {
 
     val scrollState = rememberScrollState()
 
+    // collapsing header values
     val maxHeaderHeight = 280f
     val minHeaderHeight = 140f
     val scrollOffset = scrollState.value.toFloat().coerceIn(0f, maxHeaderHeight - minHeaderHeight)
     val headerHeight = (maxHeaderHeight - scrollOffset).coerceAtLeast(minHeaderHeight)
     val imageScale = ((headerHeight - minHeaderHeight) / (maxHeaderHeight - minHeaderHeight)).coerceIn(0f, 1f)
     val imageSize = 110.dp * (0.6f + 0.4f * imageScale)
-
-    // Dynamic text visibility based on collapse
     val textColor = if (imageScale > 0.3f) Color.White else MaterialTheme.colorScheme.onSurface
     val nameAlpha = 0.7f + (0.3f * imageScale)
 
-    // Animated gradient
+    // animated gradient colors
     val infiniteTransition = rememberInfiniteTransition(label = "")
     val color1 by infiniteTransition.animateColor(
         initialValue = Color(0xFF6A11CB),
@@ -96,7 +93,7 @@ fun ProfilePage(modifier: Modifier = Modifier) {
         label = ""
     )
 
-    // Glow effect
+    // pulsing glow halo
     val glowTransition = rememberInfiniteTransition(label = "")
     val glowScale by glowTransition.animateFloat(
         0.9f, 1.2f,
@@ -112,22 +109,25 @@ fun ProfilePage(modifier: Modifier = Modifier) {
     Scaffold(modifier = modifier.fillMaxSize()) { padding ->
         Box(modifier = Modifier.fillMaxSize()) {
 
-            // 🎨 Animated Gradient Header with overlay
+            // animated gradient header + subtle motion blur overlay
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(headerHeight.dp)
-                    .background(Brush.linearGradient(listOf(color1, color2)))
+                    .graphicsLayer { translationY = scrollOffset * 0.3f } // parallax
+                    .background(
+                        Brush.linearGradient(listOf(color1, color2))
+                    )
             ) {
-                // Dark overlay for better text contrast
                 Box(
                     Modifier
                         .fillMaxSize()
                         .background(Color.Black.copy(alpha = 0.25f))
+                        .blur(50.dp) // soft blur for premium depth
                 )
             }
 
-            // Scrollable content
+            // scrollable content
             Column(
                 modifier = Modifier
                     .verticalScroll(scrollState)
@@ -196,7 +196,7 @@ fun ProfilePage(modifier: Modifier = Modifier) {
                 }
             }
 
-            // 🪄 Profile Image + Name with Glow
+            // floating profile + glow
             Column(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
