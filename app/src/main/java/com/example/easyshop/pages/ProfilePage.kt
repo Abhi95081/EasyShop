@@ -93,7 +93,6 @@ fun ProfilePage(modifier: Modifier = Modifier) {
         label = ""
     )
 
-    // pulsing glow halo
     val glowTransition = rememberInfiniteTransition(label = "")
     val glowScale by glowTransition.animateFloat(
         0.9f, 1.2f,
