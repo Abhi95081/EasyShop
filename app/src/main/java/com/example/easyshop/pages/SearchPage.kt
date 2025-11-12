@@ -39,14 +39,16 @@ fun SearchPage(
     var query by remember { mutableStateOf("") }
 
     val filteredProducts = remember(query) {
-        if (query.isBlank()) DummyProducts.productList
-        else DummyProducts.productList.filter {
-            it.title.contains(query, ignoreCase = true)
-        }
+        if (query.isNotBlank()) {
+            DummyProducts.productList.filter {
+                it.title.contains(query, ignoreCase = true)
+            }
+        } else emptyList()
     }
 
     val background = Brush.verticalGradient(
-        colors = listOf(Color(0xFFF9FBFF), Color.White))
+        colors = listOf(Color(0xFFF9FBFF), Color.White)
+    )
 
     Column(
         modifier = modifier
@@ -109,34 +111,52 @@ fun SearchPage(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        AnimatedVisibility(
-            visible = filteredProducts.isNotEmpty(),
-            enter = fadeIn(),
-            exit = fadeOut()
-        ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+        // 🟢 When user typed something
+        if (query.isNotBlank()) {
+            AnimatedVisibility(
+                visible = filteredProducts.isNotEmpty(),
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut()
             ) {
-                items(filteredProducts) { product ->
-                    SearchResultCard(product = product, onProductClick = onProductClick)
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(filteredProducts) { product ->
+                        SearchResultCard(product = product, onProductClick = onProductClick)
+                    }
                 }
             }
-        }
 
-        AnimatedVisibility(
-            visible = filteredProducts.isEmpty(),
-            enter = fadeIn(),
-            exit = fadeOut()
-        ) {
+            AnimatedVisibility(
+                visible = filteredProducts.isEmpty(),
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "No products found 😕",
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        } else {
+            // 🩵 When no query typed yet
             Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 80.dp),
+                contentAlignment = Alignment.TopCenter
             ) {
                 Text(
-                    "No products found 😕",
+                    "Start typing to search 🔍",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                     fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Medium
                 )
             }
