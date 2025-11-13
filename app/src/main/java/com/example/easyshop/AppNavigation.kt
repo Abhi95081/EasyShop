@@ -49,11 +49,11 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             val categoryId = it.arguments?.getString("categoryId")
             CategoryProductPage(modifier,categoryId?:"")
         }
+
         composable("product-details/{productId}"){
             val productId = it.arguments?.getString("productId")
             ProductDetailsPage(modifier,productId?:"")
         }
-
 
         composable("checkout"){
             CheckoutPage(modifier)
@@ -62,6 +62,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         composable("orders"){
             OrderPages(modifier)
         }
+
         composable("search") {
             SearchPage(
                 onBackClick = { navController.popBackStack() },
@@ -70,8 +71,6 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                 }
             )
         }
-
-
     }
 }
 
