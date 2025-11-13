@@ -5,9 +5,10 @@ import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.*
+import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,232 +16,293 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.*
-import androidx.core.view.WindowCompat
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.easyshop.GlobalNavigation
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.core.content.edit
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class, ExperimentalFoundationApi::class)
+// ---------- Helpers ----------
+@Composable
+private fun lerpDp(start: Dp, end: Dp, fraction: Float): Dp =
+    (start.value + (end.value - start.value) * fraction).dp
+
+// ---------- Main Profile Page (Avatar on RIGHT, floating + shrinking) ----------
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ProfilePage(modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    val sharedPref = context.getSharedPreferences("user_profile", Context.MODE_PRIVATE)
+    val ctx = LocalContext.current
+    val prefs = ctx.getSharedPreferences("user_profile", Context.MODE_PRIVATE)
     val auth = FirebaseAuth.getInstance()
-    val user = auth.currentUser
+    val firebaseUser = auth.currentUser
 
-    var name by remember { mutableStateOf(sharedPref.getString("name", "User") ?: "User") }
-    var address by remember { mutableStateOf(sharedPref.getString("address", "Not added") ?: "Not added") }
-    var imageUri by remember { mutableStateOf(sharedPref.getString("imageUri", null)) }
-    val email = user?.email ?: "No Email Available"
+    var name by remember { mutableStateOf(prefs.getString("name", "User") ?: "User") }
+    var address by remember { mutableStateOf(prefs.getString("address", "Not added") ?: "Not added") }
+    var imageUri by remember { mutableStateOf(prefs.getString("imageUri", null)) }
+    val email = firebaseUser?.email ?: "No Email Available"
 
-    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
             imageUri = it.toString()
-            sharedPref.edit().putString("imageUri", it.toString()).apply()
+            prefs.edit { putString("imageUri", imageUri) }
         }
     }
 
     var showEditDialog by remember { mutableStateOf(false) }
     var showLogoutConfirm by remember { mutableStateOf(false) }
 
-    // Dynamic Material You colors
-    val dynamicColors = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        if (isSystemInDarkTheme()) dynamicDarkColorScheme(context)
-        else dynamicLightColorScheme(context)
+    // dynamic color scheme
+    val colorScheme = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (isSystemInDarkTheme()) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx)
     } else if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()
 
+    // collapsing settings
     val scrollState = rememberScrollState()
-    val maxHeader = 260f
-    val minHeader = 140f
-    val offset = scrollState.value.toFloat().coerceIn(0f, maxHeader - minHeader)
-    val headerHeight = (maxHeader - offset).coerceAtLeast(minHeader)
-    val avatarScale = ((headerHeight - minHeader) / (maxHeader - minHeader)).coerceIn(0f, 1f)
-    val avatarSize = 108.dp * (0.85f + 0.15f * avatarScale)
+    val maxHeaderHeight = 300f
+    val minHeaderHeight = 96f
+    val offset = scrollState.value.toFloat().coerceIn(0f, maxHeaderHeight - minHeaderHeight)
+    val collapseFraction = (offset / (maxHeaderHeight - minHeaderHeight)).coerceIn(0f, 1f)
 
-    val infinite = rememberInfiniteTransition(label = "")
-    val shift by infinite.animateFloat(
-        initialValue = 0f, targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(8000, easing = LinearEasing), RepeatMode.Reverse), label = ""
+    // animated header gradient
+    val infinite = rememberInfiniteTransition()
+    val c1 by infinite.animateColor(
+        initialValue = colorScheme.primary,
+        targetValue = colorScheme.secondary,
+        animationSpec = infiniteRepeatable(tween(6000), RepeatMode.Reverse)
+    )
+    val c2 by infinite.animateColor(
+        initialValue = colorScheme.secondary,
+        targetValue = colorScheme.tertiary,
+        animationSpec = infiniteRepeatable(tween(8500), RepeatMode.Reverse)
     )
 
-    val headerBrush = Brush.linearGradient(
-        colors = listOf(
-            dynamicColors.primary.copy(alpha = 0.35f),
-            dynamicColors.surface
-        ),
-        start = Offset.Zero,
-        end = Offset(300f * shift, 400f * (1 - shift))
-    )
+    val headerHeightDp = (maxHeaderHeight - offset).dp
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = dynamicColors.background
-    ) { padding ->
+    // avatar sizing and offsets (avatar will align to the right edge)
+    val avatarStart = 120.dp
+    val avatarEnd = 44.dp
+    val avatarSizeDp = lerpDp(avatarStart, avatarEnd, collapseFraction)
+    // vertical shift so avatar moves a bit up while collapsing
+    val avatarOffsetY = lerpDp(0.dp, (-18).dp, collapseFraction)
+    // horizontal shift — small nudge left when collapsed so it visually sits nicely
+    val avatarOffsetX = lerpDp(0.dp, (-8).dp, collapseFraction)
 
-        Box(modifier = Modifier.fillMaxSize()) {
+    // title alpha: fade out large title as collapse progresses
+    val titleAlpha = (1f - collapseFraction * 1.25f).coerceIn(0f, 1f)
+    // collapsed small title alpha (for top bar)
+    val collapsedTitleAlpha = collapseFraction.coerceIn(0f, 1f)
 
-            // Animated header
+    Scaffold(containerColor = colorScheme.background) { padding ->
+        Box(modifier = modifier.fillMaxSize().padding(padding)) {
+            // Parallax header
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(headerHeight.dp)
+                    .height(headerHeightDp)
                     .graphicsLayer { translationY = -offset * 0.25f }
-                    .background(headerBrush)
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(c1.copy(alpha = 0.95f), c2.copy(alpha = 0.9f)),
+                            start = Offset.Zero,
+                            end = Offset(300f * (1 - collapseFraction), 200f * collapseFraction)
+                        )
+                    )
+            ) {
+                // subtle overlay
+                Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.06f)))
+            }
+
+            // Top overlay bar that appears when collapsed
+            TopAppBarOverlay(
+                title = name,
+                collapsedTitle = name,
+                collapseFraction = collapseFraction,
+                colorScheme = colorScheme,
+                onBack = { /* no-op */ }
             )
 
+            // Scrollable content
             Column(
                 modifier = Modifier
                     .verticalScroll(scrollState)
-                    .padding(padding)
+                    .fillMaxSize()
             ) {
-                Spacer(Modifier.height((maxHeader - 70).dp))
+                // spacer so content begins after header
+                Spacer(modifier = Modifier.height((maxHeaderHeight - avatarSizeDp.value).dp + 12.dp))
 
-                Column(Modifier.padding(horizontal = 20.dp)) {
+                Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                     // Address card
-                    ElevatedCard(
-                        shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.elevatedCardColors(
-                            containerColor = dynamicColors.surfaceColorAtElevation(2.dp)
-                        ),
-                        elevation = CardDefaults.cardElevation(4.dp),
+                    Card(
+                        shape = RoundedCornerShape(18.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+                        colors = CardDefaults.cardColors(containerColor = colorScheme.surface.copy(alpha = 0.98f)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Column(Modifier.padding(18.dp)) {
-                            Text("Address", fontWeight = FontWeight.Bold, color = dynamicColors.primary)
-                            Spacer(Modifier.height(6.dp))
-                            Text(address, color = dynamicColors.onSurfaceVariant, fontSize = 14.sp)
-                            Spacer(Modifier.height(8.dp))
-                            TextButton(
-                                onClick = { showEditDialog = true },
-                                colors = ButtonDefaults.textButtonColors(contentColor = dynamicColors.primary)
-                            ) {
-                                Text("Edit", fontWeight = FontWeight.Medium)
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Address", fontWeight = FontWeight.Bold, color = colorScheme.primary, fontSize = 14.sp)
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(address, color = colorScheme.onSurfaceVariant)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            TextButton(onClick = { showEditDialog = true }) {
+                                Text("Edit", color = colorScheme.primary)
                             }
                         }
                     }
 
-                    Spacer(Modifier.height(28.dp))
+                    Spacer(modifier = Modifier.height(22.dp))
+
+                    Text("Account", fontWeight = FontWeight.SemiBold, color = colorScheme.onSurface, fontSize = 18.sp)
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    ProfileOption(
+                        icon = Icons.Default.Menu,
+                        title = "My Orders",
+                        subtitle = "Track & manage",
+                        colors = colorScheme
+                    ) { GlobalNavigation.navController.navigate("orders") }
+
+                    ProfileOption(
+                        icon = Icons.Default.Settings,
+                        title = "Settings",
+                        subtitle = "Preferences & security",
+                        colors = colorScheme
+                    ) { /* TODO */ }
+
+                    ProfileOption(
+                        icon = Icons.Default.Info,
+                        title = "Help & Support",
+                        subtitle = "Contact & FAQs",
+                        colors = colorScheme
+                    ) { /* TODO */ }
+
+                    ProfileOption(
+                        icon = Icons.Default.ExitToApp,
+                        title = "Logout",
+                        subtitle = "Sign out safely",
+                        colors = colorScheme
+                    ) { showLogoutConfirm = true }
+
+                    Spacer(modifier = Modifier.height(36.dp))
+
                     Text(
-                        "Account",
-                        color = dynamicColors.onSurface,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-
-                    Spacer(Modifier.height(12.dp))
-
-                    ProfileOption(Icons.Default.Menu, "My Orders", "Track & manage", dynamicColors) {
-                        GlobalNavigation.navController.navigate("orders")
-                    }
-                    ProfileOption(Icons.Default.Settings, "Settings", "Preferences & security", dynamicColors) { }
-                    ProfileOption(Icons.Default.AccountCircle, "Help & Support", "FAQs & contact", dynamicColors) { }
-                    ProfileOption(Icons.Default.ExitToApp, "Logout", "Sign out of account", dynamicColors) {
-                        showLogoutConfirm = true
-                    }
-
-                    Spacer(Modifier.height(40.dp))
-                    Text(
-                        "EasyShop • Version 1.0",
-                        color = dynamicColors.onSurfaceVariant.copy(alpha = 0.7f),
-                        fontSize = 12.sp,
+                        text = "EasyShop • Version 1.0",
+                        modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
+                        color = colorScheme.onSurfaceVariant,
+                        fontSize = 12.sp
                     )
-                    Spacer(Modifier.height(60.dp))
+
+                    Spacer(modifier = Modifier.height(80.dp))
                 }
             }
 
-            // Avatar section
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
+            // Avatar + Name row placed near the top, avatar on the right.
+            // We'll create a full-width Row and align avatar end.
+            val pulse by infinite.animateFloat(initialValue = 0.9f, targetValue = 1.06f, animationSpec = infiniteRepeatable(tween(2200), RepeatMode.Reverse))
+
+            // position the row vertically so it floats over header; use offsets calculated earlier
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = (headerHeight.dp - (avatarSize / 2)))
+                    .fillMaxWidth()
+                    // top offset: center vertically relative to header minus half avatar
+                    .offset(y = ((headerHeightDp - avatarSizeDp) / 2) + avatarOffsetY)
+                    .padding(horizontal = 20.dp)
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    val halo by infinite.animateFloat(
-                        initialValue = 0.9f, targetValue = 1.1f,
-                        animationSpec = infiniteRepeatable(
-                            tween(2400, easing = FastOutSlowInEasing),
-                            RepeatMode.Reverse
-                        ), label = ""
+                // Left: Name & Email (fades as collapse advances)
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .graphicsLayer { alpha = titleAlpha }
+                ) {
+                    Text(
+                        text = name,
+                        color = colorScheme.onSurface,
+                        fontSize = lerpDp(20.dp, 16.dp, collapseFraction).value.sp,
+                        fontWeight = FontWeight.Bold
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(text = email, color = colorScheme.onSurfaceVariant, fontSize = 13.sp)
+                }
+
+                // Right: Avatar with glow + edit overlay
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .offset(x = avatarOffsetX) // small horizontal nudging while collapsing
+                ) {
+                    // halo glow
                     Box(
                         modifier = Modifier
-                            .size(avatarSize * halo)
-                            .graphicsLayer { alpha = 0.3f }
+                            .size(avatarSizeDp * pulse)
+                            .graphicsLayer { alpha = 0.22f }
+                            .clip(CircleShape)
                             .background(
-                                Brush.radialGradient(
-                                    listOf(dynamicColors.primary.copy(alpha = 0.2f), Color.Transparent)
-                                ),
-                                shape = CircleShape
+                                Brush.radialGradient(listOf(colorScheme.primary.copy(alpha = 0.28f), Color.Transparent))
                             )
                     )
 
                     AsyncImage(
-                        model = ImageRequest.Builder(context)
-                            .data(imageUri ?: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png")
-                            .crossfade(true)
-                            .build(),
-                        contentDescription = "Profile Photo",
+                        model = ImageRequest.Builder(ctx).data(imageUri ?: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png").crossfade(true).build(),
+                        contentDescription = "Profile avatar",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
-                            .size(avatarSize)
+                            .size(avatarSizeDp)
                             .clip(CircleShape)
-                            .border(2.dp, dynamicColors.outline.copy(alpha = 0.2f), CircleShape)
+                            .border(2.dp, colorScheme.outline.copy(alpha = 0.16f), CircleShape)
                             .shadow(12.dp, CircleShape)
+                            .clickable { launcher.launch("image/*") }
                     )
 
-                    IconButton(
-                        onClick = { imagePicker.launch("image/*") },
+                    // small circular edit button overlapping the avatar bottom-right
+                    Box(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
-                            .offset((-6).dp, (-6).dp)
-                            .size(34.dp)
+                            .offset(x = 6.dp, y = 6.dp)
+                            .size((avatarSizeDp * 0.36f).coerceAtLeast(30.dp))
                             .clip(CircleShape)
-                            .background(dynamicColors.primaryContainer)
+                            .background(colorScheme.primaryContainer)
+                            .border(1.dp, colorScheme.outline.copy(alpha = 0.12f), CircleShape)
+                            .clickable { launcher.launch("image/*") },
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit", tint = dynamicColors.onPrimaryContainer)
+                        Icon(Icons.Default.Edit, contentDescription = "Edit", tint = colorScheme.onPrimaryContainer, modifier = Modifier.size(16.dp))
                     }
                 }
-
-                Spacer(Modifier.height(8.dp))
-                Text(name, color = dynamicColors.onSurface, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Text(email, color = dynamicColors.onSurfaceVariant, fontSize = 13.sp)
             }
 
             // Edit dialog
             if (showEditDialog) {
-                AnimatedVisibility(
-                    visible = showEditDialog,
-                    enter = fadeIn() + scaleIn(initialScale = 0.95f),
-                    exit = fadeOut() + scaleOut(targetScale = 0.95f)
-                ) {
-                    EditProfileDialog(
-                        name = name,
-                        address = address,
-                        onDismiss = { showEditDialog = false },
-                        onSave = { n, a ->
-                            name = n; address = a
-                            sharedPref.edit().putString("name", n).putString("address", a).apply()
-                            showEditDialog = false
-                        },
-                        colors = dynamicColors
-                    )
-                }
+                EditProfileDialog(
+                    name = name,
+                    address = address,
+                    onDismiss = { showEditDialog = false },
+                    onSave = { n: String, a: String ->
+                        name = n
+                        address = a
+                        prefs.edit { putString("name", n); putString("address", a) }
+                        showEditDialog = false
+                    },
+                    colors = colorScheme
+                )
             }
 
             // Logout confirmation
@@ -251,28 +313,59 @@ fun ProfilePage(modifier: Modifier = Modifier) {
                         TextButton(onClick = {
                             auth.signOut()
                             GlobalNavigation.navController.navigate("auth") { popUpTo(0) }
-                        }) {
-                            Text("Logout", color = dynamicColors.error, fontWeight = FontWeight.SemiBold)
-                        }
+                        }) { Text("Logout", color = colorScheme.error) }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showLogoutConfirm = false }) {
-                            Text("Cancel", color = dynamicColors.primary)
-                        }
+                        TextButton(onClick = { showLogoutConfirm = false }) { Text("Cancel", color = colorScheme.primary) }
                     },
-                    title = { Text("Confirm Logout", color = dynamicColors.onSurface, fontWeight = FontWeight.Bold) },
-                    text = { Text("Do you really want to sign out?", color = dynamicColors.onSurfaceVariant) },
-                    containerColor = dynamicColors.surface,
-                    shape = RoundedCornerShape(16.dp)
+                    title = { Text("Sign out?", fontWeight = FontWeight.Bold) },
+                    text = { Text("Do you really want to sign out?", color = colorScheme.onSurfaceVariant) },
+                    containerColor = colorScheme.surface,
+                    shape = RoundedCornerShape(14.dp)
                 )
             }
         }
     }
 }
 
+// ---------- Top appbar overlay (appears when collapsed) ----------
+@Composable
+private fun TopAppBarOverlay(
+    title: String,
+    collapsedTitle: String,
+    collapseFraction: Float,
+    colorScheme: ColorScheme,
+    onBack: () -> Unit
+) {
+    // show small top bar when collapsed enough
+    val visible = collapseFraction > 0.45f
+    val animatedAlpha by animateFloatAsState(if (visible) 1f else 0f, tween(320))
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .background(Color.Transparent)
+            .padding(horizontal = 8.dp, vertical = 8.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxSize()) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = colorScheme.onSurface.copy(alpha = animatedAlpha))
+            }
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = collapsedTitle,
+                color = colorScheme.onSurface.copy(alpha = animatedAlpha),
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.alpha(animatedAlpha)
+            )
+        }
+    }
+}
+
+// ---------- Profile option row ----------
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun ProfileOption(
+fun ProfileOption(
     icon: ImageVector,
     title: String,
     subtitle: String,
@@ -280,29 +373,27 @@ private fun ProfileOption(
     onClick: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
-    val pressed = remember { mutableStateOf(false) }
-    val scale = animateFloatAsState(if (pressed.value) 0.97f else 1f, spring(stiffness = Spring.StiffnessMedium))
-
+    var pressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(targetValue = if (pressed) 0.98f else 1f, spring(stiffness = Spring.StiffnessMedium))
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .graphicsLayer { scaleX = scale.value; scaleY = scale.value }
+            .graphicsLayer { scaleX = scale; scaleY = scale }
             .clip(RoundedCornerShape(14.dp))
             .background(colors.surfaceColorAtElevation(1.dp))
-            .border(1.dp, colors.outlineVariant.copy(alpha = 0.2f), RoundedCornerShape(14.dp))
+            .border(1.dp, colors.outline.copy(alpha = 0.08f), RoundedCornerShape(14.dp))
             .combinedClickable(
                 onClick = {
                     scope.launch {
-                        pressed.value = true
+                        pressed = true
                         onClick()
                         kotlinx.coroutines.delay(120)
-                        pressed.value = false
+                        pressed = false
                     }
                 },
                 onLongClick = {}
             )
-            .padding(horizontal = 14.dp, vertical = 14.dp)
+            .padding(14.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
@@ -314,16 +405,16 @@ private fun ProfileOption(
             ) {
                 Icon(icon, contentDescription = title, tint = colors.onPrimaryContainer)
             }
-            Spacer(Modifier.width(14.dp))
+            Spacer(modifier = Modifier.width(12.dp))
             Column {
                 Text(title, color = colors.onSurface, fontWeight = FontWeight.Medium)
-                Spacer(Modifier.height(2.dp))
                 Text(subtitle, color = colors.onSurfaceVariant, fontSize = 12.sp)
             }
         }
     }
 }
 
+// ---------- Edit dialog ----------
 @Composable
 fun EditProfileDialog(
     name: String,
@@ -339,7 +430,7 @@ fun EditProfileDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = { onSave(newName.trim(), newAddress.trim()) }) {
-                Text("Save", fontWeight = FontWeight.SemiBold, color = colors.primary)
+                Text("Save", color = colors.primary, fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {
@@ -354,34 +445,17 @@ fun EditProfileDialog(
                     value = newName,
                     onValueChange = { newName = it },
                     label = { Text("Name") },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = colors.onSurface,
-                        unfocusedTextColor = colors.onSurface,
-                        focusedBorderColor = colors.primary,
-                        unfocusedBorderColor = colors.outline,
-                        focusedLabelColor = colors.primary,
-                        unfocusedLabelColor = colors.onSurfaceVariant
-                    ),
-                    singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = newAddress,
                     onValueChange = { newAddress = it },
                     label = { Text("Address") },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = colors.onSurface,
-                        unfocusedTextColor = colors.onSurface,
-                        focusedBorderColor = colors.primary,
-                        unfocusedBorderColor = colors.outline,
-                        focusedLabelColor = colors.primary,
-                        unfocusedLabelColor = colors.onSurfaceVariant
-                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
         },
         containerColor = colors.surface,
-        shape = RoundedCornerShape(18.dp)
+        shape = RoundedCornerShape(14.dp)
     )
 }
