@@ -15,7 +15,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
@@ -36,10 +35,19 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun CartPage(modifier: Modifier = Modifier) {
+
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val cartItems = remember { mutableStateListOf(*AppUtil.getCartItems().toTypedArray()) }
 
+    /** 🔥 FIXED: Always reactive cart list */
+    val cartItems = remember { mutableStateListOf<CartItem>() }
+
+    LaunchedEffect(Unit) {
+        cartItems.clear()
+        cartItems.addAll(AppUtil.getCartItems())
+    }
+
+    /** Total amount calculation */
     val totalPrice by derivedStateOf {
         cartItems.sumOf {
             val price = it.product.price.filter { c -> c.isDigit() || c == '.' }.toDoubleOrNull() ?: 0.0
@@ -47,7 +55,11 @@ fun CartPage(modifier: Modifier = Modifier) {
         }
     }
 
-    val animatedTotal by animateFloatAsState(targetValue = totalPrice.toFloat(), animationSpec = tween(500, easing = FastOutSlowInEasing), label = "")
+    val animatedTotal by animateFloatAsState(
+        targetValue = totalPrice.toFloat(),
+        animationSpec = tween(500, easing = FastOutSlowInEasing),
+        label = ""
+    )
 
     Scaffold(
         topBar = {
@@ -78,43 +90,45 @@ fun CartPage(modifier: Modifier = Modifier) {
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
+
+            /** 🛒 Show Empty View */
             if (cartItems.isEmpty()) {
                 EmptyCartView()
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(cartItems, key = { it.product.id }) { item ->
-                        AnimatedVisibility(
-                            visible = true,
-                            enter = fadeIn(animationSpec = tween(500)) + slideInVertically(initialOffsetY = { it / 2 }),
-                            exit = fadeOut(animationSpec = tween(300))
-                        ) {
-                            PremiumCartItemView(
-                                cartItem = item,
-                                onQuantityChange = { newQty ->
-                                    val index = cartItems.indexOf(item)
-                                    if (index != -1) {
-                                        cartItems[index] = item.copy(quantity = newQty)
-                                    }
-                                },
-                                onRemove = {
-                                    scope.launch {
-                                        cartItems.remove(item)
-                                        AppUtil.showToast(
-                                            context,
-                                            "${item.product.title} removed from cart 🗑️"
-                                        )
-                                    }
+                return@Box
+            }
+
+            /** 🛍 All items */
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(cartItems, key = { it.product.id }) { item ->
+
+                    AnimatedVisibility(
+                        visible = true,
+                        enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
+                        exit = fadeOut()
+                    ) {
+                        PremiumCartItemView(
+                            cartItem = item,
+                            onQuantityChange = { qty ->
+                                val index = cartItems.indexOf(item)
+                                if (index != -1)
+                                    cartItems[index] = item.copy(quantity = qty)
+                            },
+                            onRemove = {
+                                scope.launch {
+                                    cartItems.remove(item)
+                                    AppUtil.showToast(context, "${item.product.title} removed 🗑️")
                                 }
-                            )
-                        }
+                            }
+                        )
                     }
-                    item { Spacer(modifier = Modifier.height(120.dp)) }
                 }
+
+                item { Spacer(modifier = Modifier.height(120.dp)) }
             }
         }
     }
@@ -122,13 +136,14 @@ fun CartPage(modifier: Modifier = Modifier) {
 
 @Composable
 private fun TotalCheckoutBar(animatedTotal: Float, onCheckout: () -> Unit) {
+
     val infiniteTransition = rememberInfiniteTransition(label = "")
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.4f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
+            tween(1000, easing = FastOutSlowInEasing),
+            RepeatMode.Reverse
         ),
         label = ""
     )
@@ -140,7 +155,7 @@ private fun TotalCheckoutBar(animatedTotal: Float, onCheckout: () -> Unit) {
                 .background(
                     Brush.horizontalGradient(
                         listOf(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.85f),
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
                             MaterialTheme.colorScheme.secondary
                         )
                     )
@@ -149,6 +164,7 @@ private fun TotalCheckoutBar(animatedTotal: Float, onCheckout: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+
             Column {
                 Text("Total Amount", color = Color.White, fontSize = 15.sp)
                 Text(
@@ -159,24 +175,15 @@ private fun TotalCheckoutBar(animatedTotal: Float, onCheckout: () -> Unit) {
                 )
             }
 
-            val scale by animateFloatAsState(targetValue = 1.05f, animationSpec = tween(800, easing = LinearEasing), label = "")
             Button(
                 onClick = onCheckout,
                 shape = RoundedCornerShape(50),
-                contentPadding = PaddingValues(horizontal = 28.dp, vertical = 12.dp),
-                modifier = Modifier
-                    .scale(scale)
-                    .shadow(8.dp, RoundedCornerShape(50))
-                    .background(
-                        Brush.linearGradient(
-                            listOf(Color.White.copy(alpha = glowAlpha), Color.White)
-                        ),
-                        shape = RoundedCornerShape(50)
-                    ),
+                modifier = Modifier.scale(1.06f),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.White,
                     contentColor = MaterialTheme.colorScheme.primary
-                )
+                ),
+                contentPadding = PaddingValues(horizontal = 28.dp, vertical = 12.dp)
             ) {
                 Text("Checkout", fontWeight = FontWeight.Bold, fontSize = 17.sp)
             }
@@ -194,18 +201,15 @@ private fun EmptyCartView() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text("🛒", fontSize = 60.sp)
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(Modifier.height(12.dp))
         Text(
             "Your cart is empty",
-            style = MaterialTheme.typography.headlineSmall.copy(
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
         )
-        Spacer(modifier = Modifier.height(8.dp))
         Text(
             "Start shopping and fill it up!",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp),
             textAlign = TextAlign.Center
         )
     }
@@ -217,10 +221,11 @@ private fun PremiumCartItemView(
     onQuantityChange: (Int) -> Unit,
     onRemove: () -> Unit
 ) {
-    val context = LocalContext.current
+
     val priceAnim by animateFloatAsState(
-        targetValue = (cartItem.quantity * (cartItem.product.price.filter { it.isDigit() || it == '.' }.toDoubleOrNull() ?: 0.0)).toFloat(),
-        animationSpec = tween(400, easing = FastOutSlowInEasing),
+        targetValue = (cartItem.quantity * cartItem.product.price.filter { it.isDigit() || it == '.' }
+            .toDoubleOrNull()!!).toFloat(),
+        animationSpec = tween(350),
         label = ""
     )
 
@@ -231,14 +236,16 @@ private fun PremiumCartItemView(
             .clip(RoundedCornerShape(18.dp)),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
+
         Row(
             modifier = Modifier.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+
             Image(
                 painter = rememberAsyncImagePainter(cartItem.product.image.firstOrNull()),
-                contentDescription = cartItem.product.title,
+                contentDescription = null,
                 modifier = Modifier
                     .size(90.dp)
                     .clip(RoundedCornerShape(14.dp))
@@ -246,67 +253,45 @@ private fun PremiumCartItemView(
                 contentScale = ContentScale.Crop
             )
 
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = cartItem.product.title,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp,
-                    maxLines = 2
-                )
+            Column(Modifier.weight(1f)) {
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Text(cartItem.product.title, fontWeight = FontWeight.SemiBold, maxLines = 2)
 
                 Text(
-                    text = "₹%.2f".format(priceAnim),
+                    "₹%.2f".format(priceAnim),
+                    color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    modifier = Modifier.padding(vertical = 4.dp)
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
+
                     Row(verticalAlignment = Alignment.CenterVertically) {
+
                         IconButton(
-                            onClick = {
-                                if (cartItem.quantity > 1) onQuantityChange(cartItem.quantity - 1)
-                            },
-                            modifier = Modifier
-                                .size(36.dp)
-                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), CircleShape)
-                        ) {
-                            Text("-", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        }
+                            onClick = { if (cartItem.quantity > 1) onQuantityChange(cartItem.quantity - 1) },
+                            modifier = Modifier.size(36.dp)
+                        ) { Text("-", fontSize = 20.sp) }
 
                         Text(
                             cartItem.quantity.toString(),
                             fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
                             modifier = Modifier.width(30.dp),
                             textAlign = TextAlign.Center
                         )
 
                         IconButton(
                             onClick = { onQuantityChange(cartItem.quantity + 1) },
-                            modifier = Modifier
-                                .size(36.dp)
-                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), CircleShape)
-                        ) {
-                            Text("+", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        }
+                            modifier = Modifier.size(36.dp)
+                        ) { Text("+", fontSize = 20.sp) }
                     }
 
-                    IconButton(onClick = {
-                        onRemove()
-                        AppUtil.showToast(context, "Removed from cart ❌")
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "Remove",
-                            tint = MaterialTheme.colorScheme.error
-                        )
+                    IconButton(onClick = { onRemove() }) {
+                        Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
                     }
                 }
             }
