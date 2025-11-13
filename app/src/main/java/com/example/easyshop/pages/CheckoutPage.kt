@@ -164,24 +164,6 @@ fun CheckoutPage(modifier: Modifier = Modifier) {
                     }
                 }
 
-                // 💳 Payment Method Section
-                item {
-                    PremiumInfoCard(
-                        title = "Payment Method",
-                        icon = Icons.Default.ThumbUp,
-                        color = MaterialTheme.colorScheme.secondary
-                    ) {
-                        Text("Razorpay (UPI, Card, Netbanking)", fontSize = 15.sp)
-                        Spacer(Modifier.height(8.dp))
-                        OutlinedButton(
-                            onClick = { AppUtil.showToast(context, "More payment methods soon") },
-                            modifier = Modifier.align(Alignment.End)
-                        ) {
-                            Text("Change Method")
-                        }
-                    }
-                }
-
                 // 📦 Order Summary
                 item {
                     PremiumInfoCard(
