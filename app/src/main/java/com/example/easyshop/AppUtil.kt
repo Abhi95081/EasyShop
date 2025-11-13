@@ -35,6 +35,7 @@ object AppUtil {
                 existingItem.quantity++
                 showToast(context, "Increased quantity of ${product.title} to ${existingItem.quantity}")
             } else {
+                showToast(context, "Product is Added to cart ✅")
                 cartItems.add(CartItem(product, 1))
             }
         } else {
