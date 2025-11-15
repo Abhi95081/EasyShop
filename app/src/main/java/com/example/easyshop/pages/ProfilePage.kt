@@ -39,6 +39,7 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.core.content.edit
+import com.example.easyshop.GlobalNavigation.navController
 
 // ---------- Helpers ----------
 @Composable
@@ -184,14 +185,14 @@ fun ProfilePage(modifier: Modifier = Modifier) {
                         title = "Settings",
                         subtitle = "Preferences & security",
                         colors = colorScheme
-                    ) { /* TODO */ }
+                    ) {GlobalNavigation.navController.navigate("setting") }
 
                     ProfileOption(
                         icon = Icons.Default.Info,
                         title = "Help & Support",
                         subtitle = "Contact & FAQs",
                         colors = colorScheme
-                    ) { /* TODO */ }
+                    ) {GlobalNavigation.navController.navigate("help")}
 
                     ProfileOption(
                         icon = Icons.Default.ExitToApp,
