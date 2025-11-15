@@ -12,9 +12,11 @@ import com.example.easyshop.Screen.LoginScreen
 import com.example.easyshop.Screen.SignupScreen
 import com.example.easyshop.pages.CategoryProductPage
 import com.example.easyshop.pages.CheckoutPage
+import com.example.easyshop.pages.Help
 import com.example.easyshop.pages.OrderPages
 import com.example.easyshop.pages.ProductDetailsPage
 import com.example.easyshop.pages.SearchPage
+import com.example.easyshop.pages.Setting
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 
@@ -63,6 +65,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             OrderPages(modifier)
         }
 
+
         composable("search") {
             SearchPage(
                 onBackClick = { navController.popBackStack() },
@@ -70,6 +73,14 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                     navController.navigate("product-details/$productId")
                 }
             )
+        }
+
+        composable("setting"){
+            Setting(modifier)
+        }
+
+        composable("help"){
+            Help(modifier)
         }
     }
 }
