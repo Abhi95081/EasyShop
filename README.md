@@ -19,7 +19,6 @@ EasyShop combines beautiful animations, modern UI, and Firebase integration to p
 | ❤️ **Wishlist System** | Save and manage your favorite items easily with persistent local storage. |
 | 🛒 **Smart Cart Management** | Add, update, or remove products in a beautifully designed interactive cart. |
 | 💳 **Checkout Flow** | Fully functional demo checkout experience with tax, discounts, and Razorpay mock integration. |
-| 🔔 **Real-time Feedback** | Enjoy instant visual feedback using Snackbars, animations, and motion effects. |
 | 🌗 **Dark Mode Ready** | Fully adaptive light/dark theme based on system settings. |
 | ☁️ **Firebase Authentication** | Secure login, signup, and cloud-based user profile sync. |
 | 💾 **Offline-Ready** *(Optional)* | Built with Room for offline caching and persistence. |
