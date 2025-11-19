@@ -90,7 +90,7 @@ object DummyProducts {
     )
 
     // 🔁 Repeat baseProducts 8 times with unique IDs
-    val productList: List<ProductModel> = (1..8).flatMap { round ->
+    val productList: List<ProductModel> = (1..10).flatMap { round ->
         baseProducts.mapIndexed { index, product ->
             product.copy(id = "${round}-${index + 1}")
         }
