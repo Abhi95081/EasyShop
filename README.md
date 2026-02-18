@@ -68,7 +68,6 @@ Add to Cart ➜ Wishlist ➜ Checkout ➜ Payment Success
 
 - 👨‍💻 Abhishek Roushan
 - 🎓 B.E. CSE, Chandigarh University (2022–2026)
-- 📍 Sheikhpura, Bihar, India
 - 📧 abhirou7@gmail.com
 
 ---
